@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='bgp.jpg') }}');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-color: white;
+            margin: 0;
+            padding: 0;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        @media screen and (min-width: 768px) {
+            .container {
+                margin-top: 60px;
+            }
+        }
+
+        .container {
+            width: 80%;
+            max-width: 600px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            margin-top: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-container input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-container input[type="button"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .status-message {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: red;
+        }
+
+        /* Loading spinner styles */
+        .loading-spinner {
+            display: none; /* Hidden by default */
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Page</h1>
+        <p>User ID: {{ sl_no }}</p>
+
+        <!-- Upload Aadhar Form -->
+        <div class="form-container">
+            <input type="file" id="aadhar-file" accept=".pdf">
+            <input type="button" value="Upload Aadhar" onclick="uploadFile('aadhar')">
+            <div id="aadhar-submitted-message" class="status-message"></div>
+            <div id="aadhar-error-message" class="error-message"></div>
+            <div id="aadhar-loading" class="loading-spinner"></div> <!-- Loading spinner -->
+        </div>
+
+        <!-- Upload PAN Form -->
+        <div class="form-container">
+            <input type="file" id="pan-file" accept=".pdf">
+            <input type="button" value="Upload PAN" onclick="uploadFile('pan')">
+            <div id="pan-submitted-message" class="status-message"></div>
+            <div id="pan-error-message" class="error-message"></div>
+            <div id="pan-loading" class="loading-spinner"></div> <!-- Loading spinner -->
+        </div>
+
+        <div class="form-container">
+            <input type="file" id="marksheet-file" accept=".pdf">
+            <input type="button" value="Upload Marksheet" onclick="uploadFile('marksheet')">
+            <div id="marksheet-submitted-message" class="status-message"></div>
+            <div id="marksheet-error-message" class="error-message"></div>
+            <div id="marksheet-loading" class="loading-spinner"></div> <!-- Loading spinner -->
+        </div>
+
+        <!-- Done Button -->
+        <form id="done-form" action="/update_status" method="POST">
+            <input type="submit" value="Done" id="done-button" disabled>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function uploadFile(type) {
+            var fileInput = document.getElementById(type + '-file');
+            var file = fileInput.files[0];
+
+            if (file) {
+                var formData = new FormData();
+                formData.append('pdf_file', file);
+
+                // Show loading spinner
+                $('#' + type + '-loading').show();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/upload_' + type,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function () {
+                        // Show loading spinner before the AJAX request is sent
+                    },
+                    success: function(response) {
+                        if (response['error_message_' + type]) {
+                            $('#' + type + '-error-message').text(response['error_message_' + type]);
+                            $('#' + type + '-submitted-message').text('');
+                        } else {
+                            $('#' + type + '-submitted-message').text('Submitted');
+                            $('#' + type + '-error-message').text('');
+                        }
+
+                        // Hide loading spinner on success
+                        $('#' + type + '-loading').hide();
+
+                        checkSubmissionStatus();
+                    },
+                    error: function(error) {
+                        $('#' + type + '-error-message').text('Error: ' + error.responseText);
+                        $('#' + type + '-submitted-message').text('');
+
+                        // Hide loading spinner on error
+                        $('#' + type + '-loading').hide();
+                    },
+                    complete: function() {
+                        // Hide loading spinner when the request is complete
+                    }
+                });
+            } else {
+                $('#' + type + '-error-message').text('No file uploaded');
+                $('#' + type + '-submitted-message').text('');
+            }
+        }
+
+        function checkSubmissionStatus() {
+            var aadharSubmitted = $('#aadhar-submitted-message').text() === 'Submitted';
+            var panSubmitted = $('#pan-submitted-message').text() === 'Submitted';
+            var marksheetSubmitted = $('#marksheet-submitted-message').text() === 'Submitted';
+            var doneButton = $('#done-button');
+
+            if (aadharSubmitted && panSubmitted && marksheetSubmitted) {
+                doneButton.prop('disabled', false);
+            } else {
+                doneButton.prop('disabled', true);
+            }
+        }
+
+        $(document).ready(function() {
+            checkSubmissionStatus();
+        });
+    </script>
+</body>
+</html>

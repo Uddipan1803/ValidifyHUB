@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='bgp.jpg') }}');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box2 {
+            width: 90%;
+            max-width: 700px;
+            height: 310px;
+            background-color: #163e5a;
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .box {
+            width: 100%;
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .button-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+       .button-container input[type="submit"],
+       .add-user-button {
+          background-color: #2d814b;
+          color: white;
+          padding: 10px 15px;
+	  margin: 0 10px; 
+	  margin-left:20px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #163e5a; /* Light blue background color for column headings */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="box2">
+        <div class="box">
+            <h2 class="title">ADMIN PANEL</h2>
+            <div class="button-container">
+                <form action="/admin_panel" method="post">
+                    <input type="submit" name="see_users" value="See Users">
+                </form>
+                <button class="add-user-button" onclick="location.href='{{ url_for('user_registration') }}'">Add User</button>
+            </div>  
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                </tr>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.sl_no }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.status == "verified" %}
+                                Action completed
+                            {% else %}
+                                <span id="url-container-{{ user.sl_no }}"></span>
+                                <a href="#" class="generate-link" onclick="generateURL('{{ url_for('generate_url', sl_no=user.sl_no) }}', '{{ user.sl_no }}')">Generate URL</a>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.status }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+   
+        </div>
+
+
+    </div>
+    <script>
+        function generateURL(url, sl_no) {
+            var urlContainer = document.getElementById('url-container-' + sl_no);
+            var request = new XMLHttpRequest();
+    
+            request.onreadystatechange = function() {
+                if (request.readyState === 4 && request.status === 200) {
+                    urlContainer.innerHTML = request.responseText;
+                }
+            };
+    
+            request.open('GET', url, true);
+            request.send();
+        }
+    </script>
+    
+</body>
+</html>
